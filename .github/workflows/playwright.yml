@@ -1,0 +1,76 @@
+name: Playwright + Cucumber Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: 'Cucumber tag filter (e.g. @smoke)'
+        required: false
+        default: '@smoke'
+      browser:
+        description: 'Browser to use'
+        required: false
+        default: 'chromium'
+
+jobs:
+  smoke:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Run smoke tests
+        run: npm run test:smoke
+        env:
+          BASE_URL:   ${{ vars.BASE_URL || 'https://the-internet.herokuapp.com' }}
+          BROWSER:    chromium
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-report
+          path: reports/
+          retention-days: 7
+
+  regression:
+    name: Full Regression – ${{ matrix.browser }}
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - name: Run regression tests
+        run: |
+          TAGS="${{ github.event.inputs.tags || '@regression' }}"
+          npx cucumber-js --tags "$TAGS"
+        env:
+          BASE_URL: ${{ vars.BASE_URL || 'https://the-internet.herokuapp.com' }}
+          BROWSER:  ${{ matrix.browser }}
+          CI:       true
+      - name: Generate HTML report
+        if: always()
+        run: npm run report
+        env:
+          BROWSER: ${{ matrix.browser }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: regression-report-${{ matrix.browser }}
+          path: reports/
+          retention-days: 14

@@ -1,0 +1,31 @@
+{
+  "name": "herokuapp-playwright-cucumber",
+  "version": "1.0.0",
+  "description": "Enterprise Playwright + Cucumber framework targeting the-internet.herokuapp.com",
+  "author": "Javier Acha <javiacha@yahoo.com>",
+  "license": "MIT",
+  "scripts": {
+    "test": "cucumber-js",
+    "test:login": "cucumber-js --tags @login",
+    "test:forms": "cucumber-js --tags @forms",
+    "test:alerts": "cucumber-js --tags @alerts",
+    "test:tables": "cucumber-js --tags @tables",
+    "test:iframes": "cucumber-js --tags @iframes",
+    "test:smoke": "cucumber-js --tags @smoke",
+    "test:regression": "cucumber-js --tags @regression",
+    "test:headed": "HEADED=true cucumber-js",
+    "report": "node src/support/report.js"
+  },
+  "dependencies": {
+    "@cucumber/cucumber": "^10.3.2",
+    "@playwright/test": "^1.44.0",
+    "playwright": "^1.44.0",
+    "multiple-cucumber-html-reporter": "^3.6.2",
+    "dotenv": "^16.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0",
+    "ts-node": "^10.9.2"
+  }
+}
